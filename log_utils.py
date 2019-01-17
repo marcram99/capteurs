@@ -18,8 +18,18 @@ def fake_log_gen(log_date, temp, hum, log_file):
 
 
 class Log_utils():
+    """Classe permettant de gérer les logs généré par les capteurs du raspberry pi
+        en paramètre d'entrée de la classe : le fichier de log"""
+
     def __init__(self, *args):
         self.log_file = args[0]
+        self.date_log, self.temp, self.hum = self.extract_infos()
+        self.args_dict = {"hum": self.hum,
+                         "temp": self.temp,
+                         "date": self.date_log}
+    def __str__(self):
+        resultat = self.min_max()
+        return "fichier : {}\nnb lignes: {}\n---------------\n{} ".format(self.log_file, len(self.date_log),resultat)
 
     def extract_infos(self):
         tab_date = []
@@ -34,25 +44,65 @@ class Log_utils():
                 tab_hum.append(float(valeurs[2][3:-2]))
         return tab_date, tab_temp, tab_hum
 
-    def min_max(self):
-        v_min = self.val[0]
-        v_max = self.val[0]
-        for i in range(0,len(self.val)):
-            if self.val[i] < v_min:
-                        v_min = self.val[i]
-            if self.val[i] > v_max:
-                v_max = self.val[i]
-        return v_min, v_max, len(self.val)
+    def min_max(self, *args):
+        """affiche la val min. et max. de la table passée en argument
+            si pas d'arguments: affiche une string avec tout les min/max de l'objet"""
+        if args:
+            if args[0] in self.args_dict:
+                val = self.args_dict[args[0]]
+                v_min = val[0]
+                v_max = val[0]
+                for i in range(0, len(val)):
+                    if val[i] < v_min:
+                        v_min = val[i]
+                    if val[i] > v_max:
+                        v_max = val[i]
+                print('{}: {} - {}'.format(args[0], v_min, v_max))
+                return v_min, v_max
+            else:
+                raise Exception('args pas pris en charge...')
+        else:
+            resultat=''
+            for key in self.args_dict:
+                val = self.args_dict[key]
+                v_min = val[0]
+                v_max = val[0]
+                for i in range(0, len(val)):
+                    if val[i] < v_min:
+                        v_min = val[i]
+                    if val[i] > v_max:
+                        v_max = val[i]
+                resultat += ('{}: {} - {}\n'.format(key, v_min, v_max))
+            print(resultat)
+            return resultat
 
+    def search_by_date(self, date):
+        nb_res = 0
+        print('valeurs pour date: {}'.format(date))
+        for num in range(len(self.date_log)):
+            if self.date_log[num] == date:
+                print(' - temp:{} hum:{}'.format(self.temp[num], self.hum[num]))
+                nb_res += 1
+        if nb_res == 0:
+            print(' - pas de résultats trouvés')
+
+    def search_by_temp(self,temperature):
+        temp = '{:.1f}'.format(temperature)
+        nb_res = 0
+        print('dates pour température: {}'.format(temp))
+        for num in range(len(self.temp)):
+            if self.temp[num] == temp:
+                print(' - {}'.format(self.date_log[num]))
+                nb_res += 1
+        if nb_res == 0:
+            print(' - pas de résultats trouvés')
 
 if __name__ == '__main__':
-    fake_log_gen(datetime(2019, 1, 14), 5, 80, log_file)
+    #fake_log_gen(datetime(2019, 1, 14), 5, 80, log_file)
     logs = Log_utils(log_file)
-    date_log, temp, hum = logs.extract_infos()
 
-    t_min, t_max, t_nb = Log_utils.min_max(temp)
-    print('\ntemp: {} valeurs\nmin: {}\nmax: {}'.format(t_nb, t_min, t_max))
+    logs.search_by_date('2019-01-14 03:00')
+    logs.search_by_temp(5.123)
 
-    h_min, h_max, h_nb = Log_utils.min_max(hum)
-    print('\nhum: {} valeurs\nmin: {}\nmax: {}'.format(h_nb, h_min, h_max))
+
 
