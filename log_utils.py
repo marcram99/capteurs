@@ -12,7 +12,7 @@ def fake_log_gen(log_date, temp, hum, log_file):
         temp_delta = (randint(-5, 5)) / 10
         temp += temp_delta
         date = "{:%Y-%m-%d %H:%M}".format(datetime(log_date.year,log_date.month,log_date.day, i, 0))
-        data = ("{}/T:{: .2f}C/H:{: .1f}%\n".format(date, temp, hum))
+        data = ("{} / T:{: .2f}C / H:{: .1f}%\n".format(date, temp, hum))
         with open(log_file, 'a') as f:
             f.write(data)
 
@@ -31,6 +31,9 @@ class Log_utils():
         resultat = self.min_max()
         return "fichier : {}\nnb lignes: {}\n---------------\n{} ".format(self.log_file, len(self.date_log),resultat)
 
+    def affiche(self):
+        for num in range(len(self.date_log)):
+            print('{} - {: .1f} - {: .1f}'.format(self.date_log[num], self.temp[num], self.hum[num]))
     def extract_infos(self):
         tab_date = []
         tab_temp = []
@@ -41,7 +44,7 @@ class Log_utils():
                 valeurs = l.split('/')
                 tab_date.append(valeurs[0])
                 tab_temp.append(float(valeurs[1][3:-2]))
-                tab_hum.append(float(valeurs[2][3:-2]))
+                tab_hum.append(float(valeurs[2][3:-4]))
         return tab_date, tab_temp, tab_hum
 
     def min_max(self, *args):
@@ -52,12 +55,16 @@ class Log_utils():
                 val = self.args_dict[args[0]]
                 v_min = val[0]
                 v_max = val[0]
+                date_vmin = self.date_log[0]
+                date_vmax = self.date_log[0]
                 for i in range(0, len(val)):
                     if val[i] < v_min:
                         v_min = val[i]
+                        date_vmin = self.date_log[i]
                     if val[i] > v_max:
                         v_max = val[i]
-                print('{}: {} - {}'.format(args[0], v_min, v_max))
+                        date_vmax = self.date_log[i]
+                print('{0}:\nmin: {1} C le:{3}\nmax: {2} C le {4}'.format(args[0], v_min, v_max, date_vmin, date_vmax))
                 return v_min, v_max
             else:
                 raise Exception('args pas pris en charge...')
@@ -86,23 +93,31 @@ class Log_utils():
         if nb_res == 0:
             print(' - pas de résultats trouvés')
 
-    def search_by_temp(self,temperature):
-        temp = '{:.1f}'.format(temperature)
-        nb_res = 0
-        print('dates pour température: {}'.format(temp))
-        for num in range(len(self.temp)):
-            if self.temp[num] == temp:
-                print(' - {}'.format(self.date_log[num]))
-                nb_res += 1
-        if nb_res == 0:
-            print(' - pas de résultats trouvés')
+    def search_by_capt(self, critere, valeur ):
+        if critere in self.args_dict:
+            crit = self.args_dict[critere]
+            val = float('{:.1f}'.format(valeur))
+            nb_res = 0
+            print('dates pour {}: {}'.format(critere,val))
+            for num in range(len(crit)):
+                if crit[num] == val:
+                    print(' - {}'.format(self.date_log[num]))
+                    nb_res += 1
+            if nb_res == 0:
+                print(' - pas de résultats trouvés')
+        else:
+            print('critère incorect')
 
 if __name__ == '__main__':
     #fake_log_gen(datetime(2019, 1, 14), 5, 80, log_file)
-    logs = Log_utils(log_file)
 
-    logs.search_by_date('2019-01-14 03:00')
-    logs.search_by_temp(5.123)
+    logs = Log_utils('log_temp_20190113.log')
+    logs.min_max('temp')
+    logs = Log_utils('log_temp_20190114.log')
+    logs.min_max('temp')
+    logs = Log_utils('log_temp_20190115.log')
+    logs.min_max('temp')
+
 
 
 
